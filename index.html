@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="CVPD: Contrastive Counterfactual Visual Process Distillation">
+  <meta name="description" content="CVPD is a fully self-contained framework for dense, on-policy, token-level visual self-distillation in MLLMs, deriving privileged context from the model's own counterfactual blind spots.">
+  <meta name="keywords" content="CVPD, self-distillation, on-policy distillation, multimodal, MLLM, blind spots, counterfactual, contrastive, visual grounding, hallucination, BMVC 2026, machine learning, computer vision">
+  <meta name="author" content="Shravan Venkatraman, Omkar Thawakar, Ritesh Thawkar, Abdelrahman Shaker, Rao Muhammad Anwer">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="English">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="MBZUAI Oryx">
+  <meta property="og:title" content="CVPD: Contrastive Counterfactual Visual Process Distillation">
+  <meta property="og:description" content="A fully self-contained framework for dense, on-policy, token-level visual self-distillation, turning the model's own visual blind spots into contrastive supervision.">
+  <meta property="og:image" content="static/images/teaser.png">
+  <meta property="og:image:alt" content="CVPD overview teaser">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CVPD: Contrastive Counterfactual Visual Process Distillation">
+  <meta name="twitter:description" content="Turning the model's own visual blind spots into dense contrastive self-distillation, with no external annotations, tools, or stronger models.">
+  <meta name="twitter:image" content="static/images/teaser.png">
+
+  <!-- Academic/Research Specific -->
+  <meta name="citation_title" content="Perception Before Supervision: Self-Contained Visual Distillation from Counterfactual Blind Spots">
+  <meta name="citation_author" content="Venkatraman, Shravan">
+  <meta name="citation_author" content="Thawakar, Omkar">
+  <meta name="citation_author" content="Thawkar, Ritesh">
+  <meta name="citation_author" content="Shaker, Abdelrahman">
+  <meta name="citation_author" content="Anwer, Rao Muhammad">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_conference_title" content="British Machine Vision Conference (BMVC)">
+  <meta name="citation_arxiv_id" content="XXXX.XXXXX">
+  <meta name="citation_pdf_url" content="https://arxiv.org/pdf/XXXX.XXXXX">
+
+  <meta name="theme-color" content="#6D28D9">
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://ajax.googleapis.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <title>CVPD: Contrastive Counterfactual Visual Process Distillation | BMVC 2026</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="static/images/logo.png">
+  <link rel="apple-touch-icon" href="static/images/logo.png">
+
+  <!-- Critical CSS -->
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <!-- Non-critical CSS -->
+  <link rel="preload" href="static/css/bulma-carousel.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/bulma-slider.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+    <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+    <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  </noscript>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- KaTeX (for rendering the equations in the Method section) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    });
+  </script>
+
+  <!-- JS -->
+  <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/bulma-carousel.min.js"></script>
+  <script defer src="static/js/bulma-slider.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+
+  <!-- CVPD purple theme -->
+  <style>
+    :root { --primary-color:#6D28D9; --primary-hover:#5B21B6; --accent-color:#7C3AED; }
+    .publication-title-cvpd { background:linear-gradient(135deg,#6D28D9 0%,#7C3AED 100%);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .cvpd-eq { background:#f5f1fc; border-left:4px solid #6D28D9; border-radius:8px;
+      padding:14px 18px; margin:14px 0; font-size:1.02rem; overflow-x:auto; }
+    .gate-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:14px;
+      padding:20px 22px; box-shadow:0 4px 6px -1px rgb(0 0 0 / .08); height:100%; }
+    .gate-card h4 { color:#6D28D9; font-weight:700; margin-bottom:8px; }
+    .author-group { margin-bottom:2px; }
+    .fignote { color:#475569; font-size:.95rem; }
+    /* Per-scale results tabs */
+    .scale-tabs { display:flex; justify-content:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+    .scale-tab { border:2px solid #6D28D9; background:#fff; color:#6D28D9; border-radius:999px;
+      padding:8px 24px; font-weight:600; cursor:pointer; transition:all .2s; font-size:.98rem; }
+    .scale-tab:hover { background:#f0e9fc; }
+    .scale-tab.active { background:#6D28D9; color:#fff; }
+    .scale-panel { display:none; }
+    .scale-panel.active { display:block; animation:fadeSlide .35s ease; }
+    @keyframes fadeSlide { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    .restbl { width:100%; border-collapse:collapse; font-size:.92rem; }
+    .restbl th, .restbl td { padding:7px 12px; text-align:center; border-bottom:1px solid #e8edf3; }
+    .restbl th:first-child, .restbl td:first-child { text-align:left; }
+    .restbl thead th { color:#6D28D9; border-bottom:2px solid #6D28D9; }
+    .restbl .grouphdr td { background:#f5f1fc; font-weight:700; color:#5B21B6; text-align:left; }
+    .restbl .cvpd { color:#6D28D9; font-weight:700; }
+    .restbl tbody tr:hover { background:#fbfaff; }
+  </style>
+</head>
+<body>
+
+  <!-- Scroll to Top -->
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <!-- More Works Dropdown -->
+  <div class="more-works-container">
+    <button class="more-works-btn" onclick="toggleMoreWorks()" title="View More Works from Our Lab">
+      <i class="fas fa-flask"></i> More Works <i class="fas fa-chevron-down dropdown-arrow"></i>
+    </button>
+    <div class="more-works-dropdown" id="moreWorksDropdown">
+      <div class="dropdown-header">
+        <h4>More Works from Our Lab</h4>
+        <button class="close-btn" onclick="toggleMoreWorks()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="works-list">
+        <a href="https://github.com/mbzuai-oryx/VISE" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>VISE</h5>
+            <p>Paying more attention to visual tokens in self-evolving large multimodal models.</p>
+            <span class="work-venue">ECCV 2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/Ask-Solve-Generate" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Ask-Solve-Generate</h5>
+            <p>Self-evolving unified multimodal models for understanding and generation.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/LongShOT" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>LongShOT</h5>
+            <p>A benchmark and agentic framework for omni-modal reasoning and tool use in long videos.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/Video-CoM" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Video-CoM</h5>
+            <p>Interactive video reasoning via chain of manipulations.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/EvoLMM" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>EvoLMM</h5>
+            <p>Self-evolving large multimodal models with continuous rewards.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/CoVR-R" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>CoVR-R</h5>
+            <p>Reasoning-aware composed video retrieval.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/ThinkGeo" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>ThinkGeo</h5>
+            <p>A benchmark for tool-augmented agents on remote sensing tasks.</p>
+            <span class="work-venue">CVPR 2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/GeoPixel" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>GeoPixel</h5>
+            <p>A pixel grounding large multimodal model for remote sensing.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/VideoMathQA" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>VideoMathQA</h5>
+            <p>A benchmark for mathematical reasoning in real-world educational videos.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/Agent-X" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Agent-X</h5>
+            <p>Evaluating deep multimodal reasoning in vision-centric agentic tasks.</p>
+            <span class="work-venue">ICLR 2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/CoME-VL" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>CoME-VL</h5>
+            <p>Scaling complementary multi-encoder vision-language learning.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/Awesome-LLM-Post-training" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Awesome-LLM-Post-training</h5>
+            <p>A reasoning LLM post-training tutorial, survey, and guide.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/MediX-R1" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>MediX-R1</h5>
+            <p>Open-ended medical reinforcement learning.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/NestEO" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>NestEO</h5>
+            <p>A nested and aligned Earth observation framework with a multimodal dataset.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/OpenEarthAgent" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>OpenEarthAgent</h5>
+            <p>A unified framework for tool-augmented geospatial agents.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/DuwatBench" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>DuwatBench</h5>
+            <p>A benchmark for Arabic calligraphy understanding.</p>
+            <span class="work-venue">EACL 2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/Video-R2" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>Video-R2</h5>
+            <p>Reinforcing consistent and grounded reasoning in multimodal language models.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <a href="https://github.com/mbzuai-oryx/UniMed-CLIP" class="work-item" target="_blank">
+          <div class="work-info">
+            <h5>UniMed-CLIP</h5>
+            <p>A unified image-text pretraining paradigm for diverse medical imaging modalities.</p>
+            <span class="work-venue">2026</span>
+          </div>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <main id="main-content">
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <img src="static/images/logo.png" alt="CVPD logo" style="height:90px;margin-bottom:10px;">
+            <h1 class="title is-2 publication-title">
+              <span class="publication-title-cvpd">Perception Before Supervision:</span><br>
+              Self-Contained Visual Distillation from Counterfactual Blind Spots
+            </h1>
+            <p class="is-size-5" style="margin-bottom:14px;color:#475569;">
+              BMVC 2026
+            </p>
+
+            <!-- Authors (CVPD paper) -->
+            <div class="is-size-5 publication-authors">
+              <div class="author-group">
+                <span class="author-block">
+                  <a href="https://shravfolio.vercel.app" target="_blank" style="color:#6D28D9;font-weight:normal;">Shravan Venkatraman</a><sup>1</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="https://omkarthawakar.github.io/" target="_blank" style="color:#6D28D9;font-weight:normal;">Omkar Thawakar</a><sup>1</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="https://scholar.google.com/citations?hl=en&amp;user=9-2AnjQAAAAJ&amp;view_op=list_works&amp;sortby=pubdate" target="_blank" style="color:#6D28D9;font-weight:normal;">Ritesh Thawkar</a><sup>1</sup>,
+                </span>
+              </div>
+              <div class="author-group">
+                <span class="author-block">
+                  <a href="#" target="_blank" style="color:#6D28D9;font-weight:normal;">Abdelrahman Shaker</a><sup>1</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="https://scholar.google.fi/citations?user=_KlvMVoAAAAJ&amp;hl=en" target="_blank" style="color:#6D28D9;font-weight:normal;">Rao Muhammad Anwer</a><sup>1,2</sup>
+                </span>
+              </div>
+            </div>
+
+            <div class="is-size-6 publication-authors" style="margin-top:8px;color:#475569;">
+              <span class="author-block"><sup>1</sup>Mohamed bin Zayed University of Artificial Intelligence &nbsp;&bull;&nbsp; <sup>2</sup>Aalto University</span>
+            </div>
+
+            <!-- Links -->
+            <div class="column has-text-centered" style="margin-top:18px;">
+              <div class="publication-links">
+                <span class="link-block">
+                  <a href="#" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span><span>Paper</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="#" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-arxiv"></i></span><span>arXiv</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://github.com/mbzuai-oryx/CVPD" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span><span>Code</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TEASER ===================== -->
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <img src="static/images/teaser.png" alt="CVPD overview teaser" style="width:100%;border-radius:12px;">
+        <h2 class="subtitle has-text-centered fignote" style="margin-top:12px;">
+          CVPD turns visual blind spots into dense self-supervision. Reward-based self-evolution can tell
+          which response is better, but it gives no token-level corrective signal. Standard visual distillation
+          gives dense supervision, but it relies on a privileged view built with external tools. CVPD instead
+          learns from the model's own responses. A crop view sharpens the answer where the model has a blind
+          spot, and a ghosted view keeps its inattentive default the same. Together, they form a positive and a
+          negative teacher for on-policy self-distillation.
+        </h2>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ABSTRACT ===================== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Most self-improvement methods for multimodal large language models (MLLMs) rely on rewards
+              that give only a coarse, scalar signal. Distillation is a richer alternative because it
+              provides dense, token-level supervision, but in the visual domain it usually needs a privileged
+              view of the input built with external annotations, tools, or a stronger model. We introduce
+              <b>CVPD</b> (Contrastive Counterfactual Visual Process Distillation), which, as far as we know,
+              is the first fully self-contained framework for dense, on-policy, token-level visual
+              self-distillation. CVPD looks for <b>visual blind spots</b>: regions where zooming in changes
+              and sharpens the model's answer, while removing that same region barely changes its full-image
+              behavior. These regions show that the model already has the perceptual information but simply
+              is not using it. We propose a <b>three-gate Counterfactual Criterion</b> that finds these
+              regions directly from the model's own responses and turns them into dense, contrastive
+              supervision for self-distillation. On Qwen3-VL-8B-Instruct, CVPD outperforms six self-evolving
+              baselines across twelve benchmarks, including methods that use external GPT-4o supervision,
+              without a single regression. It gains <b>+3.60 on OCRBench</b>, <b>+3.38 on MMStar
+              Fine-Grained Perception</b>, and <b>+3.08 on MMStar Logical Reasoning</b>, while also improving
+              or maintaining performance on broader multimodal benchmarks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== METHOD ===================== -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Method</h2>
+          <div class="content has-text-justified">
+            <p>
+              CVPD uses just a <b>single model</b>, in two phases. In <b>Phase 1</b>, the model writes a
+              fine-grained question and answer for a raw, unlabeled image, proposes candidate regions
+              through self-grounding and coarse-to-fine grid partitions, and applies a three-gate
+              Counterfactual Criterion to keep only the regions that are genuine <i>blind spots</i>. In
+              <b>Phase 2</b>, each curated tuple sets up four policies from the same backbone, each seeing
+              a different view of the image: an online student, a crop-conditioned positive teacher, a
+              ghost-conditioned negative teacher, and a frozen reference policy. A contrastive
+              self-distillation objective is then trained entirely on-policy, with no external rewards,
+              annotations, or stronger models involved.
+            </p>
+          </div>
+          <img src="static/images/pipeline.png" alt="CVPD framework overview" style="width:95%;border-radius:12px;">
+          <h2 class="subtitle has-text-centered fignote" style="margin-top:10px;">
+            Phase 1 (Counterfactual Blind-Spot Discovery): candidate regions from self-grounding, a 3&times;3
+            grid, and a 2&times;2 grid are filtered by the three-gate Counterfactual Criterion into a Curated
+            Blind-Spot Pool. Phase 2 (Contrastive Self-Distillation): the online student learns from a
+            momentum crop teacher and a momentum ghost teacher, anchored to a frozen reference policy.
+          </h2>
+        </div>
+      </div>
+
+      <div class="columns is-centered" style="margin-top:18px;">
+        <div class="column is-one-third">
+          <div class="gate-card">
+            <h4><i class="fas fa-arrows-alt"></i>&nbsp; G1: Latent Capability Divergence</h4>
+            <p class="has-text-justified">
+              The crop view has to move the answer away from the full-image baseline. This shows the
+              crop-conditioned teacher knows something the student is not yet using.
+            </p>
+            <div class="cvpd-eq has-text-centered">
+              $D_{JS}(p_{crop} \Vert p_{full}) \geq \tau_{crop}$
+            </div>
+          </div>
+        </div>
+        <div class="column is-one-third">
+          <div class="gate-card">
+            <h4><i class="fas fa-eye-slash"></i>&nbsp; G2: Default Perceptual Invariance</h4>
+            <p class="has-text-justified">
+              Blurring out that same region should barely change the full-image answer. This confirms the
+              model was not really using that region, so the ghost view is a fair stand-in for its
+              inattentive default.
+            </p>
+            <div class="cvpd-eq has-text-centered">
+              $D_{JS}(p_{ghost} \Vert p_{full}) \leq \tau_{ghost}$
+            </div>
+          </div>
+        </div>
+        <div class="column is-one-third">
+          <div class="gate-card">
+            <h4><i class="fas fa-bullseye"></i>&nbsp; G3: Epistemic Sharpening</h4>
+            <p class="has-text-justified">
+              The crop has to sharpen the model's prediction, not just change it. This filters out regions
+              that add noise or confusion instead of resolving it.
+            </p>
+            <div class="cvpd-eq has-text-centered">
+              $H[p_{crop}(y_0)] < H[p_{full}(y_0)]$
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="has-text-centered" style="margin-top:18px;">
+        <div class="cvpd-eq" style="display:inline-block;text-align:left;max-width:100%;">
+          <div style="margin-bottom:6px;">Per-token loss:</div>
+          $$L_t = \underbrace{D_{JS}(\pi_+\Vert\pi_s)}_{\text{latent transfer}} \;+\; \lambda_{rank}\cdot\underbrace{\max\!\big(0,\ m + D_{JS}(\pi_+\Vert\pi_s) - D_{JS}(\pi_-\Vert\pi_s)\big)}_{\text{contrastive ranking}} \;+\; \beta_t\cdot\underbrace{D_{KL}(\pi_s\Vert\pi_{ref})}_{\text{KL anchor}}$$
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTS ===================== -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-full">
+          <h2 class="title is-3">Results</h2>
+          <div class="content has-text-justified">
+            <p>
+              CVPD beats six self-evolving baselines on <b>all twelve benchmarks</b> at both the 4B and 8B
+              scales, including <b>VisionZero</b> variants that use GPT-4o during dataset construction. It
+              is also the only method that does not lose points on any single benchmark compared to the
+              base model. The biggest gains show up on tasks that need precise, localized visual attention,
+              like OCR and fine-grained perception, while broader multimodal benchmarks improve too, with no
+              trade-offs.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Headline numbers -->
+      <div class="columns is-centered has-text-centered" style="margin-top:6px;">
+        <div class="column">
+          <p class="title is-2" style="color:#6D28D9;">+3.60</p>
+          <p class="subtitle is-6">OCRBench (8B)</p>
+        </div>
+        <div class="column">
+          <p class="title is-2" style="color:#6D28D9;">+3.38</p>
+          <p class="subtitle is-6">MMStar Fine-Grained (8B)</p>
+        </div>
+        <div class="column">
+          <p class="title is-2" style="color:#6D28D9;">+3.08</p>
+          <p class="subtitle is-6">MMStar Logical Reasoning (8B)</p>
+        </div>
+        <div class="column">
+          <p class="title is-2" style="color:#6D28D9;">0</p>
+          <p class="subtitle is-6">regressions across 12 benchmarks</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTS ACROSS SCALES ===================== -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Results Across Model Scales</h2>
+      <p class="has-text-centered fignote" style="margin-bottom:18px;">
+        Base vs. CVPD on Qwen3-VL at two scales. CVPD improves every benchmark with no task tradeoffs.
+        All numbers are from the paper.
+      </p>
+      <div class="scale-tabs">
+        <button class="scale-tab active" id="tab-4B" onclick="showScale('4B')">Qwen3-VL-4B</button>
+        <button class="scale-tab" id="tab-8B" onclick="showScale('8B')">Qwen3-VL-8B</button>
+      </div>
+        <div class="scale-panel active" id="panel-4B">
+          <table class="restbl"><thead><tr><th>Benchmark</th><th>Base</th><th>CVPD</th></tr></thead>
+          <tbody>
+            <tr class="grouphdr"><td colspan="3">Fine-Grained Visual Grounding</td></tr>
+            <tr><td>OCRBench</td><td>81.70</td><td class="cvpd">84.35</td></tr>
+            <tr><td>InfoVQA</td><td>77.73</td><td class="cvpd">79.15</td></tr>
+            <tr><td>MMStar Fine-Grained</td><td>60.86</td><td class="cvpd">63.35</td></tr>
+            <tr><td>MMStar Instance Reasoning</td><td>69.83</td><td class="cvpd">71.20</td></tr>
+            <tr><td>MMStar Logical Reasoning</td><td>62.96</td><td class="cvpd">65.25</td></tr>
+            <tr class="grouphdr"><td colspan="3">Broader Multimodal Benchmarks</td></tr>
+            <tr><td>AI2D</td><td>80.10</td><td class="cvpd">82.35</td></tr>
+            <tr><td>ScienceQA</td><td>87.51</td><td class="cvpd">89.05</td></tr>
+            <tr><td>CV-Bench</td><td>85.45</td><td class="cvpd">87.15</td></tr>
+            <tr><td>RealWorldQA</td><td>71.24</td><td class="cvpd">73.45</td></tr>
+            <tr><td>MMBench-EN</td><td>83.51</td><td class="cvpd">84.60</td></tr>
+            <tr><td>MME-Perception</td><td>1702.9</td><td class="cvpd">1715.5</td></tr>
+            <tr><td>SEED-Image</td><td>78.05</td><td class="cvpd">78.20</td></tr>
+          </tbody></table>
+        </div>
+        <div class="scale-panel" id="panel-8B">
+          <table class="restbl"><thead><tr><th>Benchmark</th><th>Base</th><th>CVPD</th></tr></thead>
+          <tbody>
+            <tr class="grouphdr"><td colspan="3">Fine-Grained Visual Grounding</td></tr>
+            <tr><td>OCRBench</td><td>82.80</td><td class="cvpd">86.40</td></tr>
+            <tr><td>InfoVQA</td><td>81.23</td><td class="cvpd">82.82</td></tr>
+            <tr><td>MMStar Fine-Grained</td><td>60.25</td><td class="cvpd">63.63</td></tr>
+            <tr><td>MMStar Instance Reasoning</td><td>73.03</td><td class="cvpd">74.87</td></tr>
+            <tr><td>MMStar Logical Reasoning</td><td>61.69</td><td class="cvpd">64.77</td></tr>
+            <tr class="grouphdr"><td colspan="3">Broader Multimodal Benchmarks</td></tr>
+            <tr><td>AI2D</td><td>83.31</td><td class="cvpd">84.63</td></tr>
+            <tr><td>ScienceQA</td><td>90.88</td><td class="cvpd">92.81</td></tr>
+            <tr><td>CV-Bench</td><td>86.13</td><td class="cvpd">88.27</td></tr>
+            <tr><td>RealWorldQA</td><td>69.28</td><td class="cvpd">71.07</td></tr>
+            <tr><td>MMBench-EN</td><td>84.71</td><td class="cvpd">86.10</td></tr>
+            <tr><td>MME-Perception</td><td>1716.5</td><td class="cvpd">1733.1</td></tr>
+            <tr><td>SEED-Image</td><td>78.18</td><td class="cvpd">78.78</td></tr>
+          </tbody></table>
+        </div>
+    </div>
+  </section>
+  <script>
+    function showScale(s) {
+      document.querySelectorAll('.scale-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.scale-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('panel-' + s).classList.add('active');
+      document.getElementById('tab-' + s).classList.add('active');
+    }
+  </script>
+
+  <!-- ===================== ANALYSIS ===================== -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Why it works: isolating genuine blind spots</h2>
+          <img src="static/images/graphs.png" alt="Distributional signature of counterfactual blind-spot curation" style="width:95%;border-radius:12px;">
+          <h2 class="subtitle has-text-centered fignote" style="margin-top:10px;">
+            Measured over 6,791 candidate regions from 500 raw images. <b>(Left)</b> Uncurated regions
+            perturb the model in similar ways under crop and ghost interventions (0.359 vs. 0.387 mean
+            D<sub>JS</sub>). Regions that pass the Counterfactual Criterion keep strong crop-side divergence
+            (0.265) while cutting ghost-side divergence down to 0.016, a <b>24&times;</b> drop in irrelevant
+            noise. <b>(Right)</b> Curation also flips the entropy delta from &minus;0.211 to <b>+0.378</b>,
+            showing that the selected crops actually sharpen the model's answer instead of just changing it.
+          </h2>
+          <div class="content has-text-justified" style="margin-top:18px;">
+            <p>
+              Ablations back this up. Swapping the Counterfactual Criterion for randomly picked regions
+              causes the biggest drop in performance (OCRBench &minus;2.60, MMStar Fine-Grained &minus;2.53).
+              Removing the contrastive ranking objective, so the student only learns from the crop teacher
+              and never sees the ghost-conditioned negative teacher, causes the second biggest drop
+              (OCRBench &minus;2.30, MMStar Fine-Grained &minus;2.16). Combining all three region-proposal
+              tracks (self-grounding, a 2&times;2 grid, and a 3&times;3 grid) also beats any single source
+              on its own, which shows they each catch different blind spots at different spatial scales.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BIBTEX ===================== -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <div class="bibtex-header">
+        <h2 class="title">BibTeX</h2>
+        <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+          <i class="fas fa-copy"></i> <span class="copy-text">Copy</span>
+        </button>
+      </div>
+      <pre id="bibtex-code"><code>@inproceedings{venkatraman2026cvpd,
+  title     = {Perception Before Supervision: Self-Contained Visual Distillation from Counterfactual Blind Spots},
+  author    = {Venkatraman, Shravan and Thawakar, Omkar and Thawkar, Ritesh and
+               Shaker, Abdelrahman and Anwer, Rao Muhammad},
+  booktitle = {British Machine Vision Conference (BMVC)},
+  year      = {2026}
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="has-text-centered" style="margin-bottom:18px;">
+        <a href="https://www.ival-mbzuai.com" target="_blank"><img src="static/images/IVAL_logo.png" style="height:54px;margin:0 14px;"></a>
+        <a href="https://github.com/mbzuai-oryx" target="_blank"><img src="static/images/Oryx_logo.png" style="height:54px;margin:0 14px;"></a>
+        <a href="https://mbzuai.ac.ae" target="_blank"><img src="static/images/MBZUAI_logo.png" style="height:54px;margin:0 14px;"></a>
+      </div>
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content has-text-centered">
+            <p>
+              This page was built using the
+              <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>,
+              adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+              This website is licensed under a
+              <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+              Commons Attribution-ShareAlike 4.0 International License</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  </main>
+</body>
+</html>
