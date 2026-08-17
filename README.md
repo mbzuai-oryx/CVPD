@@ -12,6 +12,7 @@
 
 <div align="center">
 
+[![Paper](https://img.shields.io/badge/📄_Paper-arXiv-b31b1b)](https://arxiv.org/abs/2608.09931)
 [![Project Page](https://img.shields.io/badge/🌐_Project-Page-6D28D9)](https://mbzuai-oryx.github.io/CVPD/)
 [![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github)](https://github.com/mbzuai-oryx/CVPD)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
